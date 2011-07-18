@@ -7,6 +7,7 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import dalvik.system.DexClassLoader;
 
+@Deprecated
 public class FragmentClassLoader {
 	private Context context;
 	private Hashtable<String, Class<Fragment>> cachedClasses;
