@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
+@Deprecated
 public class FragmentDemoActivity extends FragmentActivity {
 	private final static String TAG = "FragmentDemoActivity";
 	private final static int PROGRESS_DIALOG = 1;
