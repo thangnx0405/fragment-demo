@@ -16,7 +16,7 @@ public class FileDownloader extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected final String doInBackground(String... targets) {
-		if (targets.length != 3) {
+		if (targets.length < 2) {
 			return null;
 		}
 
@@ -24,7 +24,13 @@ public class FileDownloader extends AsyncTask<String, Integer, String> {
 
 		String jarUrl = targets[0];
 		String targetDirectoryPath = targets[1];
-		String targetFilename = targets[2];
+		String targetFilename;
+		if (targets.length == 3) {
+			targetFilename = targets[2];
+		} else {
+			String[] urlParts = jarUrl.split("/");
+			targetFilename = urlParts[urlParts.length - 1];
+		}
 
 		// Create the target directory if necessary.
 		File file = new File(targetDirectoryPath);
@@ -40,7 +46,7 @@ public class FileDownloader extends AsyncTask<String, Integer, String> {
 
 			int lenghtOfFile = connection.getContentLength();
 
-			String targetFilePath = targetDirectoryPath + "/" + targetFilename + ".jar";
+			String targetFilePath = targetDirectoryPath + "/" + targetFilename;
 
 			InputStream input = new BufferedInputStream(url.openStream());
 			OutputStream output = new FileOutputStream(targetFilePath);
