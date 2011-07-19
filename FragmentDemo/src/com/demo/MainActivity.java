@@ -1,13 +1,18 @@
 package com.demo;
 
+import java.io.File;
+import java.io.FilenameFilter;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	private final static int PROGRESS_DIALOG = 1;
@@ -29,6 +34,15 @@ public class MainActivity extends Activity {
 			}
 		});
 
+		Button loadFragmentCache = (Button) this
+				.findViewById(R.id.load_fragment_cache);
+		loadFragmentCache.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				new FragmentCacheLoader().execute();
+			}
+		});
+
 		Button startDemo = (Button) this.findViewById(R.id.start_demo);
 		startDemo.setEnabled(false);
 		startDemo.setOnClickListener(new View.OnClickListener() {
@@ -47,10 +61,6 @@ public class MainActivity extends Activity {
 		switch (id) {
 		case PROGRESS_DIALOG:
 			this.progressDialog = new ProgressDialog(this);
-			this.progressDialog.setMessage("Downloading Fragment...");
-			this.progressDialog
-					.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			this.progressDialog.setMax(100);
 			return this.progressDialog;
 		default:
 			return null;
@@ -67,6 +77,9 @@ public class MainActivity extends Activity {
 		@Override
 		protected void onPreExecute() {
 			showDialog(PROGRESS_DIALOG);
+			progressDialog.setMessage("Downloading Fragment...");
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			progressDialog.setMax(100);
 		}
 
 		@Override
@@ -86,6 +99,60 @@ public class MainActivity extends Activity {
 			}
 
 			dismissDialog(PROGRESS_DIALOG);
+		}
+	}
+
+	private class FragmentCacheLoader extends AsyncTask<Void, Void, Integer> {
+
+		@Override
+		protected void onPreExecute() {
+			showDialog(PROGRESS_DIALOG);
+			progressDialog.setMessage("Loading Fragment Cache...");
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		}
+
+		@Override
+		protected Integer doInBackground(Void... params) {
+			String fragmentDirectory = Environment
+					.getExternalStorageDirectory() + "/" + APP_DIRECTORY;
+			File fragmentDir = new File(fragmentDirectory);
+
+			if (fragmentDir.exists()) {
+				int numFragments = 0;
+				for (File fragmentFile : fragmentDir
+						.listFiles(new FragmentFileFilter())) {
+					MultiDexClassLoader.getInstance().install(
+							MainActivity.this, fragmentFile.getAbsolutePath());
+					numFragments++;
+				}
+				return numFragments;
+			}
+
+			return 0;
+		}
+
+		@Override
+		protected void onPostExecute(Integer result) {
+			dismissDialog(PROGRESS_DIALOG);
+			if (result > 0) {
+				Button startDemo = (Button) findViewById(R.id.start_demo);
+				startDemo.setEnabled(true);
+			} else {
+				Toast.makeText(MainActivity.this,
+						"Could not find any cached Fragments",
+						Toast.LENGTH_LONG).show();
+			}
+		}
+	}
+
+	private class FragmentFileFilter implements FilenameFilter {
+		@Override
+		public boolean accept(File dir, String filename) {
+			if (filename.endsWith(".apk") || filename.endsWith(".jar")
+					|| filename.endsWith(".zip")) {
+				return true;
+			}
+			return false;
 		}
 	}
 }
